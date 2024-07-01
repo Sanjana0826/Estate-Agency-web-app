@@ -1,15 +1,58 @@
+import { useContext, useState } from "react";
 import "./login.scss";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
+import apiRequest from "../../lib/apiRequest";
+import { AuthContext } from "../../context/AuthContext";
 
 function Login() {
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const {updateUser} = useContext(AuthContext)
+
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true)
+    setError("")
+    const formData = new FormData(e.target);
+
+    const username = formData.get("username");
+    
+    const password = formData.get("password");
+
+    if (!username || !password) {
+      setError("All fields are required");
+      return;
+    }
+
+    
+    try {
+      const res = await apiRequest.post("/auth/login", { username, password, });
+
+
+      updateUser(res.data);
+      navigate("/");
+
+      
+
+    } catch (err) {
+      setError(err.response?.data?.message || "An error occurred. Please try again.");
+    } finally{
+      setIsLoading(false);
+    }
+  }; 
+  
   return (
     <div className="login">
       <div className="formContainer">
-        <form>
+        <form onSubmit={handleSubmit}>
           <h1>Welcome back</h1>
-          <input name="username" type="text" placeholder="Username" />
-          <input name="password" type="password" placeholder="Password" />
+          <input name="username" type="text" required minLength={3} maxLength={20} placeholder="Username" />
+          <input name="password" type="password" required placeholder="Password" />
           <button>Login</button>
+          {error && <span>{error}</span>}
           <Link to="/register">{"Don't"} you have an account?</Link>
         </form>
       </div>
